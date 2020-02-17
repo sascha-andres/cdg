@@ -31,6 +31,9 @@ func main() {
 	// walk through directory
 	go func() {
 		err = filepath.Walk(*rootPath, func(path string, info os.FileInfo, err error) error {
+			if info == nil {
+				return nil
+			}
 			if info.IsDir() && info.Name() == ".git" {
 				p := strings.TrimSuffix(path, info.Name())
 				c <- p
