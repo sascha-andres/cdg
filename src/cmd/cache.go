@@ -45,6 +45,8 @@ var cacheCmd = &cobra.Command{
 		defer close(c)
 		defer close(d)
 
+		fmt.Printf("Scanning %s for git repositories", rootPath)
+
 		// walk through directory
 		go func() {
 			err = filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
@@ -107,7 +109,7 @@ func getAndValidate() (string, string) {
 		err       error
 	)
 
-	rootPath, err = must("path")
+	rootPath, err = must("root-path")
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -128,14 +130,12 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	cacheCmd.Flags().StringP("path", "p", ".", "Path to scan for git repositories")
-	cacheCmd.Flags().StringP("cache-file", "c", "", "File to write cache o")
+	cacheCmd.Flags().StringP("root-path", "p", ".", "Path to scan for git repositories")
+	cacheCmd.Flags().StringP("cache-file", "c", "", "File to write cache to")
 
-	cacheCmd.MarkFlagRequired("path")
-	cacheCmd.MarkFlagRequired("cache-file")
+	//cacheCmd.MarkFlagRequired("path")
 
-	_ = viper.BindPFlag("path", cacheCmd.Flags().Lookup("path"))
-	_ = viper.BindPFlag("cache-file", cacheCmd.Flags().Lookup("cache-file"))
+	_ = viper.BindPFlag("root-path", cacheCmd.Flags().Lookup("root-path"))
 }
 
 func must(argument string) (string, error) {

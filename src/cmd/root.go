@@ -16,7 +16,9 @@ limitations under the License.
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 	"os"
 
@@ -31,7 +33,58 @@ var rootCmd = &cobra.Command{
 	Use:   "cdg",
 	Short: "Tool to switch git folders",
 	Long:  `Tool to provide helper functions to switch rapidly between git folders`,
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		var (
+			err        error
+			cacheFile  string
+			lines      []string
+			currentDir string
+		)
+
+		currentDir, err = os.Getwd()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
+		cacheFile, err = must("cache-file")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		lines, err = linesInFile(cacheFile)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
+		idx, err := fuzzyfinder.Find(
+			lines,
+			func(i int) string {
+				return lines[i]
+			})
+
+		if idx <= 0 {
+			fmt.Println(currentDir)
+			os.Exit(0)
+		}
+
+		fmt.Println(lines[idx])
+	},
+}
+
+func linesInFile(fileName string) ([]string, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+	scanner := bufio.NewScanner(f)
+	result := make([]string, 0)
+	for scanner.Scan() {
+		line := scanner.Text()
+		result = append(result, line)
+	}
+	return result, nil
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -46,15 +99,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cdg.yaml)")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	cacheCmd.PersistentFlags().StringP("cache-file", "c", "", "File to write cache to")
+	cacheCmd.MarkPersistentFlagRequired("cache-file")
+
+	_ = viper.BindPFlag("cache-file", cacheCmd.Flags().Lookup("cache-file"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -77,8 +127,5 @@ func initConfig() {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
+	_ = viper.ReadInConfig()
 }
