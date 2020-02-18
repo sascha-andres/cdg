@@ -1,4 +1,4 @@
-module livingit.de/code/gitfoldercache
+module livingit.de/code/gitfolder
 
 go 1.13
 
