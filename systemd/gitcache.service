@@ -1,0 +1,9 @@
+[Unit]
+Description=Create git cache
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cdg cache --root-path /home/user/dev --cache-file /home/user/.gitcache
+
+[Install]
+WantedBy=default.target
